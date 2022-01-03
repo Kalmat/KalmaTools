@@ -1,0 +1,23 @@
+{
+    "_meta": {
+        "hash": {
+            "sha256": "459d85ee731cb3aba066d3fc4c4a5408f6f9461b8b6ba16e3912a9408b5c528a"
+        },
+        "pipfile-spec": 6,
+        "requires": {
+            "python_version": "3.9"
+        },
+        "sources": [
+            {
+                "name": "pypi",
+                "url": "https://pypi.org/simple",
+                "verify_ssl": true
+            }
+        ]
+    },
+    "default": {
+        "bkgutils": {
+            "editable": true,
+            "path": "."
+        },
+}
