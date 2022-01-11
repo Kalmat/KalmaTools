@@ -38,8 +38,7 @@ def initDisplay(parent, pos=(None, None), size=(None, None), setAsWallpaper=Fals
     else:
         if pos[0] is not None and pos[1] is not None:
             parent.move(QtCore.QPoint(int(pos[0]), int(pos[1])))
-        if (xmax is not None and ymax is not None and (xmax < screenSize.width() or ymax < screenSize.height())) or \
-                xmax is None or ymax is None:
+        if xmax is not None and ymax is not None:
             if noResize:
                 parent.setFixedSize(xmax, ymax)
             else:
@@ -57,6 +56,10 @@ def initDisplay(parent, pos=(None, None), size=(None, None), setAsWallpaper=Fals
         if "Linux" in platform.platform():
             parent.setAttribute(QtCore.Qt.WA_X11DoNotAcceptFocus)
         parent.setFocusPolicy(QtCore.Qt.NoFocus)
+        if opacity == 0:
+            parent.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)  # This produces a weird behavior on some apps (not all?!?!?)
+        parent.setAttribute(QtCore.Qt.WA_InputMethodTransparent)
+        parent.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
         flags = flags | QtCore.Qt.WindowDoesNotAcceptFocus
 
     if opacity == 0:

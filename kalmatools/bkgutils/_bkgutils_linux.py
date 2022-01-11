@@ -48,7 +48,8 @@ def findWindowHandle(title):
 def sendBehind(name):
     # Mint/Cinnamon: just clicking on the desktop, it comes up, sending the window/wallpaper to bottom!
     m = mouse.Controller()
-    m.click(SCREEN.width_in_pixels - 1, 300, 1)
+    m.move(SCREEN.width_in_pixels - 1, 300)
+    m.click(mouse.Button.left, 1)
 
     # Non-working attempts for Ubuntu/GNOME using Xlib
     # win = findWindowHandles(title=name)

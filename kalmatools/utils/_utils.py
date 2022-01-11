@@ -1,13 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import json
-import math
 import os
 import subprocess
 import sys
 import playsound
 import plyer
+import pygetwindowmp
 
 __version__ = "0.0.1"
 
@@ -319,3 +318,10 @@ def getFilesInFolder(folder, extensions):
         fileList = []
     return fileList
 
+
+def checkInstances(name):
+    instances = 0
+    for win in pygetwindowmp.getWindowsWithTitle(name):
+        if ".py" not in win.title:
+            instances += 1
+    return instances > 1
