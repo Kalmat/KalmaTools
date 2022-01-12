@@ -1,9 +1,51 @@
 # BKGUtils
 # A cross-platform module with several random utilities to manage background.
 
+import os
 import sys
 
 __version__ = "0.0.1"
+
+
+def get_wm():
+    # https://stackoverflow.com/questions/3333243/how-can-i-check-with-python-which-window-manager-is-running
+    return os.environ.get('XDG_CURRENT_DESKTOP') or ""
+
+
+def getWMAdjustments(is_macos, line_width):
+    wm = get_wm()
+    if "GNOME" in wm:
+        # PyQt5 geometry is not correct in Ubuntu/GNOME?!?!?!
+        xAdj = 0
+        yAdj = 0
+        xGap = line_width * 6
+        yGap = 0
+        wGap = line_width * 6
+        hGap = line_width * 7
+    elif "Cinnamon" in wm:
+        # Mouse position does not fit windowsAt coordinates in Cinnamon
+        xAdj = 0
+        yAdj = 20
+        xGap = 0
+        yGap = line_width * 3
+        wGap = 0
+        hGap = - line_width * 3
+    elif is_macos:
+        xAdj = 0
+        yAdj = 0
+        xGap = 0
+        yGap = line_width * 3
+        wGap = 0
+        hGap = 0
+    else:
+        xAdj = 0
+        yAdj = 0
+        xGap = - line_width
+        yGap = 0
+        wGap = line_width * 2
+        hGap = line_width
+
+    return xAdj, yAdj, xGap, yGap, wGap, hGap
 
 
 if sys.platform == "darwin":
@@ -12,9 +54,10 @@ if sys.platform == "darwin":
         sendFront,
         getWallpaper,
         setWallpaper,
+        enable_activedesktop,
+        toggleDesktopIcons,
         getWorkArea,
-        get_wm,
-        getWMAdjustments
+        getAttributes
     )
 
 elif sys.platform == "win32":
@@ -23,13 +66,10 @@ elif sys.platform == "win32":
         sendFront,
         getWallpaper,
         setWallpaper,
-        refreshDesktop,
-        force_refresh,
         enable_activedesktop,
         toggleDesktopIcons,
         getWorkArea,
-        get_wm,
-        getWMAdjustments
+        getAttributes
     )
 
 elif sys.platform == "linux":
@@ -38,10 +78,10 @@ elif sys.platform == "linux":
         sendFront,
         getWallpaper,
         setWallpaper,
+        enable_activedesktop,
+        toggleDesktopIcons,
         getWorkArea,
-        getAttributes,
-        get_wm,
-        getWMAdjustments
+        getAttributes
     )
 
 else:

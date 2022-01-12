@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import platform
 import subprocess
 import ctypes
 
@@ -137,10 +138,15 @@ def x11SendBehind(name):
         x11.XLowerWindow(m_display, hwnd)
 
 
-def sendFront(name, parent):
-    win = findAllWindowHandles(title=name)
-    w = DISP.create_resource_object('window', win)
-    w.reparent(parent, 0, 0)
+def sendFront(hWnd=None, name=""):
+    if not hWnd and name:
+        hWnd = findAllWindowHandles(title=name)
+    if hWnd:
+        if "arm" in platform.platform():
+            EWMH.setWmState(hWnd, 1, '_NET_WM_STATE_ABOVE', 0)
+        else:
+            EWMH.setActiveWindow(hWnd)
+        EWMH.display.flush()
 
 
 def getWallpaper():
@@ -161,51 +167,23 @@ def setWallpaper(img=""):
         return False
 
 
+def enable_activedesktop():
+    raise NotImplementedError
+
+
+def toggleDesktopIcons():
+    raise NotImplementedError
+
+
+def getScreenSize():
+    resolution = ROOT.get_geometry()
+    return resolution.width, resolution.height
+
+
 def getWorkArea():
     work_area = EWMH.getWorkArea()
     return work_area[0], work_area[1], work_area[2], work_area[3]
 
 
-def getAttributes(win):
-    return EWMH.getWmWindowType(win, str=True)
-
-
-def get_wm():
-    # https://stackoverflow.com/questions/3333243/how-can-i-check-with-python-which-window-manager-is-running
-    return os.environ.get('XDG_CURRENT_DESKTOP') or ""
-
-
-def getWMAdjustments(is_macos, line_width):
-    wm = get_wm()
-    if "GNOME" in wm:
-        # PyQt5 geometry is not correct in Ubuntu/GNOME?!?!?!
-        xAdj = 0
-        yAdj = 0
-        xGap = line_width * 6
-        yGap = 0
-        wGap = line_width * 6
-        hGap = line_width * 7
-    elif "Cinnamon" in wm:
-        # Mouse position does not fit windowsAt coordinates in Cinnamon
-        xAdj = 0
-        yAdj = 20
-        xGap = 0
-        yGap = line_width * 3
-        wGap = 0
-        hGap = - line_width * 3
-    elif is_macos:
-        xAdj = 0
-        yAdj = 0
-        xGap = 0
-        yGap = line_width * 3
-        wGap = 0
-        hGap = 0
-    else:
-        xAdj = 0
-        yAdj = 0
-        xGap = - line_width
-        yGap = 0
-        wGap = line_width * 2
-        hGap = line_width
-
-    return xAdj, yAdj, xGap, yGap, wGap, hGap
+def getAttributes(hWnd):
+    return EWMH.getWmWindowType(hWnd, str=True)

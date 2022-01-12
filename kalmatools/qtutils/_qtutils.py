@@ -15,7 +15,6 @@ def initDisplay(parent, pos=(None, None), size=(None, None), setAsWallpaper=Fals
     if icon:
         parent.setWindowIcon(QtGui.QIcon(icon))
 
-    xmax, ymax = size
     screenSize = QtWidgets.QApplication.primaryScreen().size()
     flags = 0
 
@@ -26,19 +25,14 @@ def initDisplay(parent, pos=(None, None), size=(None, None), setAsWallpaper=Fals
             aot = False
             aob = True
             frameless = True
-            if "Linux" in platform.platform():
-                parent.setAttribute(QtCore.Qt.WA_X11NetWmWindowTypeDesktop)
-            if opacity == 0:
-                parent.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)  # This produces a weird behavior on some apps (not all?!?!?)
-            parent.setAttribute(QtCore.Qt.WA_InputMethodTransparent)
-            parent.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
             parent.setGeometry(0, 0, xmax, ymax)
         else:
             parent.showFullScreen()
     else:
-        if pos[0] is not None and pos[1] is not None:
+        if len(pos) == 2 and pos[0] is not None and pos[1] is not None:
             parent.move(QtCore.QPoint(int(pos[0]), int(pos[1])))
-        if xmax is not None and ymax is not None:
+        if len(size) == 2 and size[0] is not None and size[1] is not None:
+            xmax, ymax = size
             if noResize:
                 parent.setFixedSize(xmax, ymax)
             else:
@@ -55,9 +49,9 @@ def initDisplay(parent, pos=(None, None), size=(None, None), setAsWallpaper=Fals
     if noFocus:
         if "Linux" in platform.platform():
             parent.setAttribute(QtCore.Qt.WA_X11DoNotAcceptFocus)
-        parent.setFocusPolicy(QtCore.Qt.NoFocus)
         if opacity == 0:
             parent.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)  # This produces a weird behavior on some apps (not all?!?!?)
+        parent.setFocusPolicy(QtCore.Qt.NoFocus)
         parent.setAttribute(QtCore.Qt.WA_InputMethodTransparent)
         parent.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
         flags = flags | QtCore.Qt.WindowDoesNotAcceptFocus
@@ -65,8 +59,7 @@ def initDisplay(parent, pos=(None, None), size=(None, None), setAsWallpaper=Fals
     if opacity == 0:
         parent.setAttribute(QtCore.Qt.WA_NoSystemBackground, True)
         parent.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
-        flags = flags | QtCore.Qt.FramelessWindowHint   # If window is not frameless, it will not be transparent (!)
-        frameless = True
+        frameless = True    # If window is not frameless, it will not be transparent (!)
     elif opacity != 255:
         parent.setWindowOpacity(opacity)
 
