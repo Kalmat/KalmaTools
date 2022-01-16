@@ -104,7 +104,7 @@ def sendKeys(parent, char="", qkey=None, modifier=QtCore.Qt.NoModifier, text=Non
     QtCore.QCoreApplication.sendEvent(parent, event)
 
 
-def createImgFromText(text, font, bcolor=QtGui.QColor(QtCore.Qt.GlobalColor.black), fcolor=QtGui.QColor(QtCore.Qt.GlobalColor.white), saveFile=""):
+def createImgFromText(text, font, bcolor=QtGui.QColor(QtCore.Qt.black), fcolor=QtGui.QColor(QtCore.Qt.white), saveFile=""):
     # https://stackoverflow.com/questions/41904610/how-to-create-a-simple-image-qimage-with-text-and-colors-in-qt-and-save-it-as
 
     fm = QtGui.QFontMetrics(font)

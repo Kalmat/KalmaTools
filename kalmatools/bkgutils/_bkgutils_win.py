@@ -59,11 +59,9 @@ def sendBehind(name):
         return thelist
 
     # https://www.codeproject.com/Articles/856020/Draw-Behind-Desktop-Icons-in-Windows-plus
+    progman = win32gui.FindWindow("Progman", None)
+    win32gui.SendMessageTimeout(progman, 0x052C, 0, 0, win32con.SMTO_NORMAL, 1000)
     workerw = getWorkerW()
-    if not workerw:
-        progman = win32gui.FindWindow("Progman", None)
-        win32gui.SendMessageTimeout(progman, 0x052C, 0, 0, win32con.SMTO_NORMAL, 1000)
-        workerw = getWorkerW()
     hWnd = findWindowHandle(name)
     ret = False
     if hWnd and workerw:

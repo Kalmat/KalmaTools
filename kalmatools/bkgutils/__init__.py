@@ -3,13 +3,23 @@
 
 import os
 import sys
+import tkinter as tk
+import importlib
 
 __version__ = "0.0.1"
 
 
+def getScreenSize():
+    root = tk.Tk()
+    root.withdraw()
+    w, h = root.winfo_screenwidth(), root.winfo_screenheight()
+    root.destroy()
+    return w, h
+
+
 def get_wm():
     # https://stackoverflow.com/questions/3333243/how-can-i-check-with-python-which-window-manager-is-running
-    return os.environ.get('XDG_CURRENT_DESKTOP') or ""
+    return os.environ.get('XDG_CURRENT_DESKTOP', "")
 
 
 def getWMAdjustments(is_macos, line_width):
@@ -86,4 +96,3 @@ elif sys.platform == "linux":
 
 else:
     raise NotImplementedError('BkgUtils currently does not support this platform. If you think you can help, please contribute! https://github.com/Kalmat/')
-
