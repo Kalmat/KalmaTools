@@ -4,7 +4,6 @@
 import os
 import sys
 import tkinter as tk
-import importlib
 
 __version__ = "0.0.1"
 
@@ -65,6 +64,7 @@ if sys.platform == "darwin":
         getWallpaper,
         setWallpaper,
         enable_activedesktop,
+        refreshDesktop,
         toggleDesktopIcons,
         getWorkArea,
         getAttributes
@@ -77,6 +77,7 @@ elif sys.platform == "win32":
         getWallpaper,
         setWallpaper,
         enable_activedesktop,
+        refreshDesktop,
         toggleDesktopIcons,
         getWorkArea,
         getAttributes
@@ -89,6 +90,7 @@ elif sys.platform == "linux":
         getWallpaper,
         setWallpaper,
         enable_activedesktop,
+        refreshDesktop,
         toggleDesktopIcons,
         getWorkArea,
         getAttributes

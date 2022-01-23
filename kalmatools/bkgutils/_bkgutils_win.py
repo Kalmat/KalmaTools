@@ -99,6 +99,26 @@ def enable_activedesktop():
         raise WindowsError('Cannot enable Active Desktop') from e
 
 
+def refreshDesktop():
+    # https://newbedev.com/how-to-refresh-reload-desktop
+
+    hWnd = win32gui.GetWindow(win32gui.FindWindow("Progman", "Program Manager"), win32con.GW_CHILD)
+    if not hWnd:
+        ptrs = findWindowHandles(window_class="WorkerW")
+        for i in range(len(ptrs)):
+            hWnd = win32gui.FindWindowEx(ptrs[i], 0, "SHELLDLL_DefView", "")
+    if hWnd:
+        win32gui.SendMessage(hWnd, 0x111, 0x7402, 0)
+
+
+def refreshDesktopB():
+    win32gui.SendMessage(win32con.HWND_BROADCAST, win32con.WM_SETTINGCHANGE, 0, 1)
+
+
+def force_refresh():
+    ctypes.windll.user32.UpdatePerUserSystemParameters(1)
+
+
 def toggleDesktopIcons():
     thelist = []
 

@@ -1,15 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import ctypes
 import os
 import platform
 import subprocess
-import ctypes
 
 import Xlib
 import Xlib.X
 import Xlib.display
+import bkgutils
 import ewmh
+import pygetwindowmp
 from pynput import mouse
 
 DISP = Xlib.display.Display()
@@ -47,6 +49,18 @@ def findWindowHandle(title):
 
 
 def sendBehind(name):
+
+    windows = pygetwindowmp.getWindowsWithTitle(name)
+    if windows:
+        hWnd = windows[0]
+        EWMH.setWmState(hWnd, 1, '_NET_WM_STATE_BELOW', 0)
+        EWMH.display.flush()
+        EWMH.setWmState(hWnd, 1, '_NET_WM_STATE_SKIP_TASKBAR', 0)
+        EWMH.display.flush()
+        EWMH.setWmState(hWnd, 1, '_NET_WM_STATE_SKIP_PAGER', 0)
+        EWMH.display.flush()
+        EWMH.setWmState(hWnd, 0, '_NET_WM_STATE_FOCUSED', 0)
+        EWMH.display.flush()
     # Mint/Cinnamon: just clicking on the desktop, it comes up, sending the window/wallpaper to bottom!
     m = mouse.Controller()
     m.move(SCREEN.width_in_pixels - 1, 300)
@@ -152,7 +166,7 @@ def sendFront(hWnd=None, name=""):
 def getWallpaper():
     cmd = """gsettings get org.gnome.desktop.background picture-uri"""
     try:
-        wp = subprocess.check_output(cmd, shell=True).decode(encoding="utf-8").strip()
+        wp = subprocess.check_output(cmd, shell=True).decode(encoding="utf-8").strip().replace("file://", "").replace("'", "")
     except:
         wp = ""
     return wp
@@ -164,6 +178,25 @@ def setWallpaper(img=""):
         subprocess.Popen(cmd, shell=True)
         return True
     except:
+        return False
+
+
+def refreshDesktop():
+    wm = bkgutils.get_wm().upper()
+    cmd = ""
+    if "GNOME" in wm:
+        cmd = """killall -3 gnome-shell"""
+    elif "CINNAMON" in wm:
+        cmd = """cinnamon --replace --display=:0"""
+    elif "LXDE" in wm:
+        cmd = """/etc/init.d/lxdm restart"""
+    if cmd:
+        try:
+            subprocess.Popen(cmd, shell=True)
+            return True
+        except:
+            return False
+    else:
         return False
 
 

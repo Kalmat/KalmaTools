@@ -26,6 +26,8 @@ def initDisplay(parent, pos=(None, None), size=(None, None), setAsWallpaper=Fals
             aob = True
             frameless = True
             parent.setGeometry(0, 0, xmax, ymax)
+            if "Linux" in platform.platform():
+                parent.setAttribute(QtCore.Qt.WA_X11NetWmWindowTypeDesktop, True)
         else:
             parent.showFullScreen()
     else:
@@ -47,11 +49,10 @@ def initDisplay(parent, pos=(None, None), size=(None, None), setAsWallpaper=Fals
         flags = flags | QtCore.Qt.WindowStaysOnBottomHint
 
     if noFocus:
-        if "Linux" in platform.platform():
-            parent.setAttribute(QtCore.Qt.WA_X11DoNotAcceptFocus)
-        if opacity == 0:
-            parent.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)  # This produces a weird behavior on some apps (not all?!?!?)
         parent.setFocusPolicy(QtCore.Qt.NoFocus)
+        if "Linux" in platform.platform():
+            parent.setAttribute(QtCore.Qt.WA_X11DoNotAcceptFocus, True)
+        parent.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents, True)
         parent.setAttribute(QtCore.Qt.WA_InputMethodTransparent)
         parent.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
         flags = flags | QtCore.Qt.WindowDoesNotAcceptFocus

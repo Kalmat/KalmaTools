@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import subprocess
 import AppKit
 import Quartz
 
@@ -52,6 +53,15 @@ def setWallpaper(imageURL):
     #                                                       [AppKit.NSWorkspaceDesktopImageScalingKey,
     #                                                        AppKit.NSWorkspaceDesktopImageFillColorKey])
     # sharedSpace.setDesktopImageURL_forScreen_options_error_(img, mainScreen, optDict, None)
+
+
+def refreshDesktop():
+    cmd = """killall Finder"""
+    try:
+        subprocess.Popen(cmd, shell=True)
+        return True
+    except:
+        return False
 
 
 def enable_activedesktop():
