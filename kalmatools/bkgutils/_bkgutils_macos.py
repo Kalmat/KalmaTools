@@ -2,37 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import subprocess
+
 import AppKit
-import Quartz
 
 WS = AppKit.NSWorkspace.sharedWorkspace()
 SCREEN = AppKit.NSScreen.mainScreen()
-
-
-def sendBehind(name):
-    w = None
-    for win in AppKit.NSApp().orderedWindows():
-        w = win
-        break
-    if w:
-        # https://stackoverflow.com/questions/4982584/how-do-i-draw-the-desktop-on-mac-os-x
-        w.setLevel_(Quartz.kCGDesktopWindowLevel - 1)
-        w.setCollectionBehavior_(Quartz.NSWindowCollectionBehaviorCanJoinAllSpaces |
-             Quartz.NSWindowCollectionBehaviorStationary |
-             Quartz.NSWindowCollectionBehaviorIgnoresCycle)
-
-
-def sendFront(name):
-    w = None
-    for win in AppKit.NSApp().orderedWindows():
-        w = win
-        break
-    if w:
-        # https://stackoverflow.com/questions/4982584/how-do-i-draw-the-desktop-on-mac-os-x
-        w.setLevel_(Quartz.kCGDesktopWindowLevel + 1)
-        w.setCollectionBehavior_(Quartz.NSWindowCollectionBehaviorCanJoinAllSpaces |
-             Quartz.NSWindowCollectionBehaviorStationary |
-             Quartz.NSWindowCollectionBehaviorIgnoresCycle)
 
 
 def getWallpaper():
@@ -41,10 +15,10 @@ def getWallpaper():
     return imageURL
 
 
-def setWallpaper(imageURL):
+def setWallpaper(imageURL, convert=False):
     # https://stackoverflow.com/questions/65936437/change-macos-background-picture-with-adapt-to-screen-parameter-in-python
-    # Use this to convert a "normal" image path into a macOS wallpaper path (NSURL)
-    # imageURL = Foundation.NSURL.fileURLWithPath_(img)
+    if convert:
+        imageURL = AppKit.Foundation.NSURL.fileURLWithPath_(imageURL)
     WS.setDesktopImageURL_forScreen_options_error_(imageURL, SCREEN, None, None)
 
     # Use this to change image scaling and other options

@@ -5,6 +5,8 @@ import os
 import sys
 import tkinter as tk
 
+import pywinctl
+
 __version__ = "0.0.1"
 
 
@@ -14,6 +16,42 @@ def getScreenSize():
     w, h = root.winfo_screenwidth(), root.winfo_screenheight()
     root.destroy()
     return w, h
+
+
+def sendBehind(hWnd=None, name=""):
+    if not hWnd and name:
+        windows = pywinctl.getWindowsWithTitle(title=name)
+        if windows:
+            hWnd = windows[0]
+    if hWnd:
+        hWnd.sendBehind()
+
+
+def sendFront(hWnd=None, name=""):
+    if not hWnd and name:
+        windows = pywinctl.getWindowsWithTitle(title=name)
+        if windows:
+            hWnd = windows[0]
+    if hWnd:
+        hWnd.sendBehind(sb=False)
+
+
+def lowerWindow(hWnd=None, name=""):
+    if not hWnd and name:
+        windows = pywinctl.getWindowsWithTitle(title=name)
+        if windows:
+            hWnd = windows[0]
+    if hWnd:
+        hWnd.lowerWindow()
+
+
+def raiseWindow(hWnd=None, name=""):
+    if not hWnd and name:
+        windows = pywinctl.getWindowsWithTitle(title=name)
+        if windows:
+            hWnd = windows[0]
+    if hWnd:
+        hWnd.raiseWindow()
 
 
 def get_wm():
@@ -59,8 +97,6 @@ def getWMAdjustments(is_macos, line_width):
 
 if sys.platform == "darwin":
     from ._bkgutils_macos import (
-        sendBehind,
-        sendFront,
         getWallpaper,
         setWallpaper,
         enable_activedesktop,
@@ -72,8 +108,6 @@ if sys.platform == "darwin":
 
 elif sys.platform == "win32":
     from ._bkgutils_win import (
-        sendBehind,
-        sendFront,
         getWallpaper,
         setWallpaper,
         enable_activedesktop,
@@ -85,8 +119,6 @@ elif sys.platform == "win32":
 
 elif sys.platform == "linux":
     from ._bkgutils_linux import (
-        sendBehind,
-        sendFront,
         getWallpaper,
         setWallpaper,
         enable_activedesktop,

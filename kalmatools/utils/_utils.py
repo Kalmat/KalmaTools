@@ -6,7 +6,7 @@ import subprocess
 import sys
 import playsound
 import plyer
-import pygetwindowmp
+import pywinctl
 
 __version__ = "0.0.1"
 
@@ -133,13 +133,13 @@ def linux_run_as_admin():
 def get_screen_pos(name=None):
     # Position doesn't take into account border width and title bar height
     try:
-        import pygetwindow
+        import pywinctl
 
         win = None
         if not name:
-            win = pygetwindow.getActiveWindow()
+            win = pywinctl.getActiveWindow()
         else:
-            windows = pygetwindow.getWindowsWithTitle(name)
+            windows = pywinctl.getWindowsWithTitle(name)
             if windows:
                 win = windows[0]
         if win:
@@ -321,7 +321,7 @@ def getFilesInFolder(folder, extensions):
 
 def checkInstances(name):
     instances = 0
-    for win in pygetwindowmp.getWindowsWithTitle(name):
+    for win in pywinctl.getWindowsWithTitle(name):
         if ".py" not in win.title:
             instances += 1
     return instances > 1

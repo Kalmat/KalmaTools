@@ -3,16 +3,11 @@
 
 import ctypes
 import os
-import platform
 import subprocess
 
 import Xlib
-import Xlib.X
-import Xlib.display
 import bkgutils
 import ewmh
-import pygetwindowmp
-from pynput import mouse
 
 DISP = Xlib.display.Display()
 SCREEN = DISP.screen()
@@ -20,147 +15,130 @@ ROOT = SCREEN.root
 EWMH = ewmh.EWMH(_display=DISP, root=ROOT)
 
 
-def findAllWindowHandles(parent=None, window_class="", title=""):
+def _X11SendBehind(hWnd=None, name="", parent=None):
+    # Attempts to send window behind desktop icons and useful commands examples using Xlib and X11 library
 
-    def getAllWindows(parent=None):
-        if not parent:
-            parent = ROOT
-        windows = parent.query_tree().children
-        return windows
-
-    def getWindowsWithTitle(parent=None, window_class="", title=""):
-        matches = []
-        for win in getAllWindows(parent):
-            w = DISP.create_resource_object('window', win)
-            if title and title == w.get_wm_name() or \
-                    window_class and window_class == w.get_wm_class():
-                matches.append(win)
-        return matches
-
-    if title:
-        windows = getWindowsWithTitle(parent=parent, title=title)
-    else:
-        windows = getAllWindows(parent=parent)
-    return windows
-
-
-def findWindowHandle(title):
-    return findAllWindowHandles(title=title)
-
-
-def sendBehind(name):
-
-    windows = pygetwindowmp.getWindowsWithTitle(name)
-    if windows:
-        hWnd = windows[0]
-        EWMH.setWmState(hWnd, 1, '_NET_WM_STATE_BELOW', 0)
-        EWMH.display.flush()
-        EWMH.setWmState(hWnd, 1, '_NET_WM_STATE_SKIP_TASKBAR', 0)
-        EWMH.display.flush()
-        EWMH.setWmState(hWnd, 1, '_NET_WM_STATE_SKIP_PAGER', 0)
-        EWMH.display.flush()
-        EWMH.setWmState(hWnd, 0, '_NET_WM_STATE_FOCUSED', 0)
-        EWMH.display.flush()
-    # Mint/Cinnamon: just clicking on the desktop, it comes up, sending the window/wallpaper to bottom!
-    m = mouse.Controller()
-    m.move(SCREEN.width_in_pixels - 1, 300)
-    m.click(mouse.Button.left, 1)
-
-    # Non-working attempts for Ubuntu/GNOME using Xlib
-    # win = findWindowHandles(title=name)
-    # if win:
-    #     win = win[0]
-    #     w = DISP.create_resource_object('window', win)
-    #
-    #     https://stackoverflow.com/questions/58885803/can-i-use-net-wm-window-type-dock-ewhm-extension-in-openbox
-    #     Does not sends current window below. It does with the new window, but not behind the desktop icons
-    #     w.change_property(DISP.intern_atom('_NET_WM_WINDOW_TYPE'), Xlib.Xatom.ATOM,
-    #                       32, [DISP.intern_atom("_NET_WM_WINDOW_TYPE_DESKTOP"), ],
-    #                       Xlib.X.PropModeReplace)
-    #     w.map()
-    #
-    #     newWin = ROOT.create_window(0, 0, 500, 500, 1, SCREEN.root_depth,
-    #                                 background_pixel=SCREEN.black_pixel,
-    #                                 event_mask=Xlib.X.ExposureMask | Xlib.X.KeyPressMask)
-    #     newWin.change_property(DISP.intern_atom('_NET_WM_WINDOW_TYPE'), Xlib.Xatom.ATOM,
-    #                            32, [DISP.intern_atom("_NET_WM_WINDOW_TYPE_DESKTOP"), ],
-    #                            Xlib.X.PropModeReplace)
-    #     newWin.map()
-    #     w.reparent(newWin, 0, 0)
-
-
-def x11SendBehind(name):
-    # Non-working attempts for Ubuntu/GNOME directly using x11 library (Xlib does not have XLowerWindow()???)
     x11 = ctypes.cdll.LoadLibrary('libX11.so.6')
     # m_display = x11.XOpenDisplay(None)
-    m_display = x11.XOpenDisplay(bytes(os.environ["DISPLAY"], 'ascii'))
+    m_display = x11.XOpenDisplay(bytes(os.environ.get("DISPLAY", ""), 'ascii'))
     if m_display == 0: return
     m_root_win = x11.XDefaultRootWindow(m_display, ctypes.c_int(0))
 
-    def x11GetWindowsWithTitle(display, current, name):
-        # https://stackoverflow.com/questions/37918260/python3-segfaults-when-using-ctypes-on-xlib-python2-works
-        # https://www.unix.com/programming/254680-xlib-search-window-his-name.html
-        # https://stackoverflow.com/questions/55173668/xgetwindowproperty-and-ctypes
+    # HANDLES
+    # prevParent = hWnd.query_tree().parent
+    # parent = _X11GetWindowsWithTitle(m_display, m_root_win, "gnome-shell")[-1]
+    # hwnd = _X11GetWindowsWithTitle(m_display, m_root_win, name)[0]
 
+    # NAMES
+    # winName = ctypes.c_char_p()
+    # x11.XFetchName(m_display, parent, ctypes.byref(winName))
+    # print(winName.value.decode())
+
+    # GEOMETRY
+    # root = ctypes.POINTER(ctypes.c_ulong)()
+    # x = ctypes.c_uint()
+    # y = ctypes.c_uint()
+    # width = ctypes.c_uint()
+    # height = ctypes.c_uint()
+    # border = ctypes.c_uint()
+    # depth = ctypes.c_uint()
+    # x11.XGetGeometry(m_display, hWnd, ctypes.byref(root), ctypes.byref(x), ctypes.byref(y), ctypes.byref(width), ctypes.byref(height), ctypes.byref(border), ctypes.byref(depth))
+
+    # TREE
+    # root = ctypes.c_ulong()
+    # children = ctypes.POINTER(ctypes.c_ulong)()
+    # wparent = ctypes.c_ulong()
+    # nchildren = ctypes.c_uint()
+    # x11.XQueryTree(m_display, hwnd, ctypes.byref(root), ctypes.byref(wparent), ctypes.byref(children), ctypes.byref(nchildren))
+    # print("PARENT", wparent.value)
+
+    # REPARENT
+    x11.XReparentWindow(m_display, hWnd, parent, ctypes.c_uint(0), ctypes.c_uint(0))
+    x11.XFlush(m_display)
+
+    # RAISE
+    x11.XRaiseWindow(m_display, hWnd)
+    x11.XFlush(m_display)
+
+    # LOWER
+    # x11.XLowerWindow(m_display, hWnd)
+    # x11.XFlush(m_display)
+
+    # RESTACK
+    # windows = [parent, hwnd]
+    # cwindows = (ctypes.c_ulong * len(windows))(*windows)
+    # x11.XRestackWindows(m_display, cwindows, ctypes.c_int(2))
+    # x11.XFlush(m_display)
+
+
+def _X11GetWindowsWithTitle(display=None, parent=None, name=""):
+    # https://stackoverflow.com/questions/37918260/python3-segfaults-when-using-ctypes-on-xlib-python2-works
+    # https://www.unix.com/programming/254680-xlib-search-window-his-name.html
+    # https://stackoverflow.com/questions/55173668/xgetwindowproperty-and-ctypes
+    x11 = ctypes.cdll.LoadLibrary('libX11.so.6')
+    if not display:
+        # display = x11.XOpenDisplay(None)
+        display = x11.XOpenDisplay(bytes(os.environ["DISPLAY"], 'ascii'))
+        if display == 0: return []
+    if not parent:
+        parent = x11.XDefaultRootWindow(display, ctypes.c_int(0))
+
+    def queryTree(hwnd):
+        root = ctypes.c_ulong()
+        children = ctypes.POINTER(ctypes.c_ulong)()
+        parent = ctypes.c_ulong()
+        nchildren = ctypes.c_uint()
+        childrenList = []
+
+        x11.XQueryTree(display, hwnd, ctypes.byref(root), ctypes.byref(parent), ctypes.byref(children), ctypes.byref(nchildren))
+
+        for index in range(nchildren.value):
+            childrenList.append(children[index])
+
+        return childrenList
+
+    def getName(hwnd):
         winName = ctypes.c_char_p()
-        x11.XFetchName(display, current, ctypes.byref(winName))
-
-        retVal = 0
-        wName = ""
+        x11.XFetchName(display, hwnd, ctypes.byref(winName))
+        name = ""
         if winName.value is not None:
-            try:
-                wName = winName.value.decode()
-            except:
-                pass
+            name = winName.value.decode()
+        return name
 
-        if wName == name:
-            retVal = current
+    matches = []
+    if not name:
+        matches = [parent]
 
-        else:
-            root = ctypes.c_ulong()
-            children = ctypes.POINTER(ctypes.c_ulong)()
-            parent = ctypes.c_ulong()
-            nchildren = ctypes.c_uint()
+    def findit(hwnd):
 
-            x11.XQueryTree(display, current, ctypes.byref(root), ctypes.byref(parent), ctypes.byref(children),
-                           ctypes.byref(nchildren))
+        children = queryTree(hwnd)
+        for child in children:
+            if getName(child) == name:
+                matches.append(child)
+            findit(child)
 
-            for i in range(nchildren.value):
-                retVal = x11GetWindowsWithTitle(display, children[i], name)
-                if retVal != 0:
-                    break
-
-        return retVal
-
-    hwnd = x11GetWindowsWithTitle(m_display, m_root_win, name)
-    if hwnd:
-        # https://stackoverflow.com/questions/33578144/xlib-push-window-to-the-back-of-the-other-windows
-        window_type = x11.XInternAtom(m_display, "_NET_WM_WINDOW_TYPE", False)
-        desktop = x11.XInternAtom(m_display, "_NET_WM_WINDOW_TYPE_DESKTOP", False)
-        data = (ctypes.c_ubyte * len(str(desktop)))()
-
-        # newWin = x11.XCreateSimpleWindow(m_display, m_root_win, ctypes.c_uint(0), ctypes.c_uint(0), ctypes.c_uint(1920), ctypes.c_uint(1080), ctypes.c_uint(0), ctypes.c_ulong(0), SCREEN.white_pixel)  # SCREEN.white_pixel) # WhitePixel(m_display, DefaultScreen(m_display)))
-        # x11.XChangeProperty(m_display, newWin, window_type, Xlib.Xatom.ATOM, ctypes.c_int(32), Xlib.X.PropModeReplace, data, ctypes.c_int(1))
-        # x11.XClearWindow(m_display, newWin)
-        # x11.XMapWindow(m_display, newWin)
-
-        x11.XChangeProperty(m_display, hwnd, window_type, Xlib.Xatom.ATOM, ctypes.c_int(32), Xlib.X.PropModeReplace, data, ctypes.c_int(1))
-        # x11.XClearWindow(m_display, hwnd)
-        x11.XMapWindow(m_display, hwnd)
-        # x11.XReparentWindow(m_display, hwnd, newWin)
-
-        x11.XLowerWindow(m_display, hwnd)
+    findit(parent)
+    return matches
 
 
-def sendFront(hWnd=None, name=""):
-    if not hWnd and name:
-        hWnd = findAllWindowHandles(title=name)
-    if hWnd:
-        if "arm" in platform.platform():
-            EWMH.setWmState(hWnd, 1, '_NET_WM_STATE_ABOVE', 0)
-        else:
-            EWMH.setActiveWindow(hWnd)
-        EWMH.display.flush()
+def _xlibGetAllWindows(parent=None, title=""):
+    # Not using window class (get_wm_class())
+
+    if not parent:
+        parent = ROOT
+    matches = []
+    if not title:
+        matches.append(parent)
+
+    def findit(hwnd):
+        query = hwnd.query_tree()
+        for child in query.children:
+            if not title or (title and title == child.get_wm_name()):
+                matches.append(child)
+            findit(child)
+
+    findit(parent)
+    return matches
 
 
 def getWallpaper():
@@ -187,7 +165,7 @@ def refreshDesktop():
     if "GNOME" in wm:
         cmd = """killall -3 gnome-shell"""
     elif "CINNAMON" in wm:
-        cmd = """cinnamon --replace --display=:0"""
+        cmd = """cinnamon --replace --display=%s""" % os.environ.get("DISPLAY", None)
     elif "LXDE" in wm:
         cmd = """/etc/init.d/lxdm restart"""
     if cmd:
@@ -204,8 +182,21 @@ def enable_activedesktop():
     raise NotImplementedError
 
 
-def toggleDesktopIcons():
-    raise NotImplementedError
+def toggleDesktopIcons(forceRefresh=False):
+    desktopFolder = subprocess.check_output(['xdg-user-dir', 'DESKTOP']).strip().decode()
+    if os.path.isfile(desktopFolder+"/.hidden"):
+        cmd = """cd %s &&
+                 gsettings set org.gnome.shell.extensions.desktop-icons show-trash true &&
+                 gsettings set org.gnome.shell.extensions.desktop-icons show-home true &&
+                 rm -f .hidden""" % desktopFolder
+    else:
+        cmd = """cd %s &&
+                 gsettings set org.gnome.shell.extensions.desktop-icons show-trash false &&
+                 gsettings set org.gnome.shell.extensions.desktop-icons show-home false &&
+                 ls > .hidden""" % desktopFolder
+    os.system(cmd)
+    if forceRefresh:
+        refreshDesktop()
 
 
 def getScreenSize():

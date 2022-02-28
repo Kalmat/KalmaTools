@@ -34,6 +34,7 @@ setup(
         "playsound~=1.3.0",
         "plyer~=2.0.0",
         "pygame==2.0.2",
+        "pywinctl",
         "PyQt5==5.15.4",
         "PyQtWebEngine==5.15.5",
         "requests==2.26.0",
