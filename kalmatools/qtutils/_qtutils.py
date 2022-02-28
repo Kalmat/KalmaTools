@@ -31,6 +31,7 @@ def initDisplay(parent, pos=(None, None), size=(None, None), setAsWallpaper=Fals
             frameless = True
             parent.setGeometry(0, 0, xmax, ymax)
             if "Linux" in platform.platform():
+                # This sends the window to the bottom, hides its icon and skips it from taskbar and pager
                 parent.setAttribute(QtCore.Qt.WA_X11NetWmWindowTypeDesktop, True)
         else:
             parent.showFullScreen()
