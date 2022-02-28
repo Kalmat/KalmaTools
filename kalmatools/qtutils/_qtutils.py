@@ -10,14 +10,17 @@ __version__ = "0.0.1"
 def initDisplay(parent, pos=(None, None), size=(None, None), setAsWallpaper=False, fullScreen=False, frameless=False,
                 opacity=255, noFocus=False, noResize=False, caption=None, icon=None, hideIcon=False, aot=False, aob=False):
 
-    if caption:
-        parent.setWindowTitle(caption)
-    if icon:
-        parent.setWindowIcon(QtGui.QIcon(icon))
-
     screenSize = QtWidgets.QApplication.primaryScreen().size()
     flags = 0
-    styleFlag = QtCore.Qt.Window if (icon and not hideIcon) else QtCore.Qt.Tool
+
+    if caption:
+        parent.setWindowTitle(caption)
+    if (icon and not hideIcon and not setAsWallpaper) or "Linux" in platform.platform():
+        # QtCore.Qt.Tool crashes on Linux when re-showing the app
+        parent.setWindowIcon(QtGui.QIcon(icon))
+        styleFlag = QtCore.Qt.Window
+    else:
+        styleFlag = QtCore.Qt.Tool
 
     if setAsWallpaper or fullScreen:
         xmax, ymax = screenSize.width(), screenSize.height()
@@ -29,7 +32,6 @@ def initDisplay(parent, pos=(None, None), size=(None, None), setAsWallpaper=Fals
             parent.setGeometry(0, 0, xmax, ymax)
             if "Linux" in platform.platform():
                 parent.setAttribute(QtCore.Qt.WA_X11NetWmWindowTypeDesktop, True)
-            styleFlag = QtCore.Qt.Tool
         else:
             parent.showFullScreen()
     else:
@@ -48,12 +50,13 @@ def initDisplay(parent, pos=(None, None), size=(None, None), setAsWallpaper=Fals
     if aot:
         flags = flags | QtCore.Qt.WindowStaysOnTopHint
     elif aob:
+        pass
         flags = flags | QtCore.Qt.WindowStaysOnBottomHint
 
     if noFocus:
         parent.setFocusPolicy(QtCore.Qt.NoFocus)
         if "Linux" in platform.platform():
-            parent.setAttribute(QtCore.Qt.WA_X11DoNotAcceptFocus, True)
+           parent.setAttribute(QtCore.Qt.WA_X11DoNotAcceptFocus, True)
         parent.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents, True)
         parent.setAttribute(QtCore.Qt.WA_InputMethodTransparent)
         parent.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
@@ -70,7 +73,7 @@ def initDisplay(parent, pos=(None, None), size=(None, None), setAsWallpaper=Fals
         flags = flags | QtCore.Qt.FramelessWindowHint
 
     if flags:
-        parent.setWindowFlags(flags | styleFlag | QtCore.Qt.CustomizeWindowHint)
+        parent.setWindowFlags(styleFlag | QtCore.Qt.CustomizeWindowHint | flags)
 
     return xmax, ymax
 
