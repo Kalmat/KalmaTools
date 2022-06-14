@@ -18,5 +18,6 @@ from ._utils import (
     subprocess_args,
     wrap_text,
     to_float,
-    getFilesInFolder
+    getFilesInFolder,
+    checkInstances
 )

@@ -23,5 +23,8 @@ from ._qtutils import (
     getRGBAfromColorName,
     getRGBAfromColorRGB,
     setHTMLStyle,
-    getQColorFromRGB
+    getQColorFromRGB,
+    spy_on_all_signals,
+    adjustFont,
+    getPlainText
 )
