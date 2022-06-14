@@ -346,7 +346,7 @@ class Marquee(QtWidgets.QLabel):
                     self._x += 1
                 else:
                     self._x = self._initX
-        self.repaint()
+            self.repaint()
 
     def event(self, event):
         if event.type() == QtCore.QEvent.Enter:
