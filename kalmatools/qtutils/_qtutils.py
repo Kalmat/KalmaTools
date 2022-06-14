@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import platform
+from typing import Iterable
 from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5.QtCore import pyqtBoundSignal, pyqtSlot, QObject
+
 
 __version__ = "0.0.1"
 
@@ -286,12 +289,121 @@ def getQColorFromRGB(color):
 
 
 class Marquee(QtWidgets.QLabel):
+
+    def __init__(self, parent=None, font=None, color="white", bkgColor="black", fps=60, direction=QtCore.Qt.RightToLeft):
+        super().__init__(parent)
+        self._parent = parent
+        if font:
+            self.setFont(font)
+        self._fm = QtGui.QFontMetrics(self.font())
+        self._color = color
+        self._bkgColor = bkgColor
+        self._fps = fps
+        self._direction = direction if direction in (QtCore.Qt.RightToLeft, QtCore.Qt.LeftToRight) else QtCore.Qt.RightToLeft
+
+        self._document = None
+        self._timer = None
+        self._speed = int(1 / self._fps * 1000)
+        self._paused = False
+        self._initX = 0
+        self._x = 0
+
+        self._timer = QtCore.QTimer(self)
+        self._timer.timeout.connect(self.translate)
+
+    def setHtml(self, text):
+
+        self._document = QtGui.QTextDocument(self)
+        htmlText = setHTMLStyle(text=text, color=self._color, bkgcolor=self._bkgColor, font=self.font().family(), fontSize=int(self.font().pointSize()*1.5), strong=True)
+        self._document.setHtml(htmlText)
+        self._document.setTextWidth(self._fm.width(text))
+        self._document.setUseDesignMetrics(True)
+
+        self.setDirection(self._direction)
+
+    def start(self):
+        if not self._timer.isActive() and self._document.textWidth() > self.width():
+            self._paused = False
+            self._timer.start(self._speed)
+
+    def paintEvent(self, event):
+        if self._document:
+            p = QtGui.QPainter(self)
+            p.translate(self._x, 0)
+            self._document.drawContents(p)
+        return super().paintEvent(event)
+
+    @pyqtSlot()
+    def translate(self):
+        print(self._paused)
+        if not self._paused:
+            if self._direction == QtCore.Qt.RightToLeft:
+                if self.width() - self._x < self._document.textWidth():
+                    self._x -= 1
+                else:
+                    self._x = self._initX
+            else:
+                if self._x <= self.width():
+                    self._x += 1
+                else:
+                    self._x = self._initX
+        self.repaint()
+
+    def event(self, event):
+        if event.type() == QtCore.QEvent.Enter:
+            self._paused = True
+        elif event.type() == QtCore.QEvent.Leave:
+            self._paused = False
+        return super().event(event)
+
+    def pause(self):
+        if self._timer.isActive():
+            self._paused = True
+            self._timer.stop()
+
+    def resume(self):
+        if not self._timer.isActive() and self._paused:
+            self._paused = False
+            self._timer.start(self._speed)
+
+    def getFPS(self):
+        return self._fps
+
+    def setFPS(self, fps):
+        self._fps = fps
+        self._speed = int(1 / self._fps * 1000)
+        if not self._paused:
+            if self._timer.isActive():
+                self._timer.stop()
+            self._timer.start(self._speed)
+
+    def getDirection(self):
+        return self._direction
+
+    def setDirection(self, direction):
+        self._direction = direction if direction in (QtCore.Qt.RightToLeft, QtCore.Qt.LeftToRight) else QtCore.Qt.RightToLeft
+        if self._document:
+            if self._direction == QtCore.Qt.RightToLeft:
+                self._initX = self._parent.width() / 2 if self._parent else self.width()
+            else:
+                self._initX = -(self._document.textWidth() * 0.85)
+            self._x = self._initX
+        else:
+            self._initX = 0
+            self._x = 0
+
+    def stop(self):
+        if self._timer.isActive():
+            self._timer.stop()
+
+
+class MarqueeQt(QtWidgets.QLabel):
     # Based on moving a QLabel with a pixmap generated from the desired text
     # Good try, but still consumes a lot of CPU (for an RPi or alike, not for a PC)
     # Smooth=False is an ugly hack to make it work on RPi 1 whilst not raising CPU usage to 100%
 
     def __init__(self, parent, font=None, stylesheet=None, fps=60, direction=QtCore.Qt.RightToLeft, smooth=True):
-        super(Marquee, self).__init__(parent)
+        super(MarqueeQt, self).__init__(parent)
 
         self.hide()
 
@@ -606,13 +718,6 @@ def marqueeTk(parent, text, x, y, width, height, margin=2, borderwidth=1, relief
     if transparent:
         root.wm_attributes("-transparentcolor", "white")
     root.mainloop()
-
-
-from typing import Iterable
-
-from PyQt5.QtCore import pyqtBoundSignal
-from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtCore import QObject
 
 
 def _list_all_signals(obj: QObject) -> Iterable[pyqtBoundSignal]:
