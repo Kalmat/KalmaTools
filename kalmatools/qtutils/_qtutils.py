@@ -335,7 +335,6 @@ class Marquee(QtWidgets.QLabel):
 
     @pyqtSlot()
     def translate(self):
-        print(self._paused)
         if not self._paused:
             if self._direction == QtCore.Qt.RightToLeft:
                 if self.width() - self._x < self._document.textWidth():
