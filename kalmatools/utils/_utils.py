@@ -7,6 +7,8 @@ import sys
 import playsound
 import plyer
 import pywinctl
+import threading
+import time
 
 __version__ = "0.0.1"
 
@@ -19,6 +21,50 @@ def resource_path(file, rel_path):
     if os.path.isdir(abs_path_to_resource) and abs_path_to_resource[-1:] != os.path.sep:
         abs_path_to_resource += os.path.sep
     return abs_path_to_resource
+
+
+class Timer:
+
+    SNOOZE = 0
+    ONEOFF = 1
+
+    def __init__(self, timerType=SNOOZE):
+
+        self._obj = self._Counter()
+        self._kill = threading.Event()
+        self._timerType = timerType
+        self._msec = 0
+        self._thread = None
+        self._function = None
+
+    class _Counter:
+
+        def __init__(self):
+            super().__init__()
+
+        def run(self, quit_event: threading.Event(), msec: int, callback):
+            endTime = round(time.time() * 1000) + msec
+            while round(time.time() * 1000) < endTime and not quit_event.is_set():
+                time.sleep(0.001)
+            if not quit_event.is_set():
+                callback()
+
+    def start(self, msec, callback):
+        self._function = callback
+        self._msec = msec
+        if msec > 0:
+            self._thread = threading.Thread(target=self._obj.run, args=(self._kill, self._msec, self._callback))
+            self._thread.setDaemon(True)
+            self._thread.start()
+
+    def _callback(self):
+        self._function()
+        if self._timerType == self.SNOOZE:
+            self.start(self._msec, self._function)
+
+    def stop(self):
+        self._kill.set()
+        self._thread.join()
 
 
 def get_CPU_temp(archOS):

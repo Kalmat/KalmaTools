@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import platform
-from typing import Iterable
+from typing import Iterable, Tuple
+import pywinctl
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import pyqtBoundSignal, pyqtSlot, QObject
 
@@ -10,7 +11,7 @@ from PyQt5.QtCore import pyqtBoundSignal, pyqtSlot, QObject
 __version__ = "0.0.1"
 
 
-def initDisplay(parent, pos=(None, None), size=(None, None), setAsWallpaper=False, fullScreen=False, frameless=False,
+def initDisplay(parent, pos=(None, None), size=(None, None), fullScreen=False, frameless=False,
                 opacity=255, noFocus=False, noResize=False, caption=None, icon=None, hideIcon=False, aot=False, aob=False):
 
     screenSize = QtWidgets.QApplication.primaryScreen().size()
@@ -18,26 +19,16 @@ def initDisplay(parent, pos=(None, None), size=(None, None), setAsWallpaper=Fals
 
     if caption:
         parent.setWindowTitle(caption)
-    if (icon and not hideIcon and not setAsWallpaper) or "Linux" in platform.platform():
+    if (icon and not hideIcon) or "Linux" in platform.platform():
         # QtCore.Qt.Tool crashes on Linux when re-showing the app
         parent.setWindowIcon(QtGui.QIcon(icon))
         styleFlag = QtCore.Qt.Window
     else:
         styleFlag = QtCore.Qt.Tool
 
-    if setAsWallpaper or fullScreen:
+    if fullScreen:
         xmax, ymax = screenSize.width(), screenSize.height()
-        if setAsWallpaper:
-            noFocus = True
-            aot = False
-            aob = True
-            frameless = True
-            parent.setGeometry(0, 0, xmax, ymax)
-            if "Linux" in platform.platform():
-                # This sends the window to the bottom, hides its icon and skips it from taskbar and pager
-                parent.setAttribute(QtCore.Qt.WA_X11NetWmWindowTypeDesktop, True)
-        else:
-            parent.showFullScreen()
+        parent.showFullScreen()
     else:
         if len(pos) == 2 and pos[0] is not None and pos[1] is not None:
             parent.move(QtCore.QPoint(int(pos[0]), int(pos[1])))
@@ -80,6 +71,82 @@ def initDisplay(parent, pos=(None, None), size=(None, None), setAsWallpaper=Fals
         parent.setWindowFlags(styleFlag | QtCore.Qt.CustomizeWindowHint | flags)
 
     return xmax, ymax
+
+
+class PropWindow(QtWidgets.QMainWindow):
+
+    def __init__(self, parent: pywinctl.Window, image, size, pos, interval=30 * 1000, life=5 * 60 * 1000):
+        super().__init__()
+
+        self._parent = parent
+        initDisplay(parent=self, size=size, pos=pos, frameless=True, aot=True, opacity=0, noResize=True)
+        self.setStyleSheet("background-color:transparent;")
+        self._label = QtWidgets.QLabel()
+        self._label.setScaledContents(True)
+        self.layout().addWidget(self._label)
+        if isinstance(image, list):
+            self._images = image
+            self._interval = interval
+            QtCore.QTimer().singleShot(interval, self._drawStage)
+        else:
+            self._images = [image]
+            self._interval = 0
+        self.changePixmap(self._images[0])
+        self._label.adjustSize()
+        self._label.move(0, 0)
+        self._label.show()
+
+        self._stage = 0
+        self._moving = False
+        self._oldPos = self.pos()
+
+        if life > 0:
+            QtCore.QTimer().singleShot(life, self._closeWin)
+
+    def show(self):
+        super(PropWindow, self).show()
+        self._parent.raiseWindow()
+
+    def changePixmap(self, pixmap):
+        self._label.setPixmap(pixmap)
+        self._label.adjustSize()
+        self._parent.raiseWindow()
+
+    def changeSize(self, size: Tuple):
+        self.setFixedSize(size[0], size[1])
+        self.adjustSize()
+        self._label.setFixedSize(size[0], size[1])
+        self._label.adjustSize()
+        self._parent.raiseWindow()
+
+    def _drawStage(self):
+        self._stage += 1
+        if self._stage < len(self._images):
+            self.changePixmap(self._images[self._stage])
+            QtCore.QTimer().singleShot(self._interval, self._drawStage)
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._moving = True
+            self._oldPos = event.globalPos()
+        super(PropWindow, self).mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event) -> None:
+        if self._moving and event.button() == QtCore.Qt.LeftButton:
+            self._moving = False
+        super(PropWindow, self).mouseReleaseEvent(event)
+        self._parent.raiseWindow()
+
+    def mouseMoveEvent(self, event):
+        if self._moving:
+            delta = QtCore.QPoint(event.globalPos() - self._oldPos)
+            self.move(self.x() + delta.x(), self.y() + delta.y())
+        self._oldPos = event.globalPos()
+        super(PropWindow, self).mouseMoveEvent(event)
+
+    def _closeWin(self):
+        self.close()
+        self.deleteLater()
 
 
 def getScreenSize():
@@ -289,8 +356,9 @@ def getQColorFromRGB(color):
 
 
 class Marquee(QtWidgets.QLabel):
+    # https://stackoverflow.com/questions/36297429/smooth-scrolling-text-in-qlabel
 
-    def __init__(self, parent=None, font=None, color="white", bkgColor="black", fps=60, direction=QtCore.Qt.RightToLeft):
+    def __init__(self, parent=None, font=None, color="white", bkgColor="black", fps=60, direction=QtCore.Qt.RightToLeft, autoPause=False):
         super().__init__(parent)
         self._parent = parent
         if font:
@@ -300,6 +368,7 @@ class Marquee(QtWidgets.QLabel):
         self._bkgColor = bkgColor
         self._fps = fps
         self._direction = direction if direction in (QtCore.Qt.RightToLeft, QtCore.Qt.LeftToRight) else QtCore.Qt.RightToLeft
+        self._autoPause = autoPause
 
         self._document = None
         self._timer = None
@@ -349,10 +418,11 @@ class Marquee(QtWidgets.QLabel):
             self.repaint()
 
     def event(self, event):
-        if event.type() == QtCore.QEvent.Enter:
-            self._paused = True
-        elif event.type() == QtCore.QEvent.Leave:
-            self._paused = False
+        if self._autoPause:
+            if event.type() == QtCore.QEvent.Enter:
+                self._paused = True
+            elif event.type() == QtCore.QEvent.Leave:
+                self._paused = False
         return super().event(event)
 
     def pause(self):

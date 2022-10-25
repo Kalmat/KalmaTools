@@ -19,5 +19,6 @@ from ._utils import (
     wrap_text,
     to_float,
     getFilesInFolder,
-    checkInstances
+    checkInstances,
+    Timer
 )

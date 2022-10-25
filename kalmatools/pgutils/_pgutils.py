@@ -10,7 +10,7 @@ import urllib.request
 import pygame
 import time
 import traceback
-from .. import utils
+from . import utils
 
 
 def init_display(size=(None, None), pos=(None, None), hideMouse=True, clearScreen=False,
