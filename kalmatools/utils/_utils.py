@@ -65,14 +65,15 @@ class Timer:
         if msec > 0:
             self._msec = msec
             self._function = callback
-            self._keep.set()
             if not self._thread:
+                self._keep.set()
                 self._thread = threading.Thread(target=self._obj.run, args=(self._keep, self._msec, self._callback))
                 self._thread.setDaemon(True)
                 self._thread.start()
             else:
                 self._obj._Qmsec.put(self._msec)
                 self._obj._Qcallback.put(self._callback)
+                self._keep.set()
 
     def _callback(self):
         self._function()
