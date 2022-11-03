@@ -2,8 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import os
+import queue
 import subprocess
 import sys
+from typing import Callable, Any
+
 import playsound
 import plyer
 import pywinctl
@@ -31,7 +34,7 @@ class Timer:
     def __init__(self, timerType=SNOOZE):
 
         self._obj = self._Counter()
-        self._kill = threading.Event()
+        self._keep = threading.Event()
         self._timerType = timerType
         self._msec = 0
         self._thread = None
@@ -41,30 +44,47 @@ class Timer:
 
         def __init__(self):
             super().__init__()
+            self._Qmsec = queue.Queue()
+            self._Qcallback = queue.Queue()
 
-        def run(self, quit_event: threading.Event(), msec: int, callback):
-            endTime = round(time.time() * 1000) + msec
-            while round(time.time() * 1000) < endTime and not quit_event.is_set():
-                time.sleep(0.001)
-            if not quit_event.is_set():
-                callback()
+        def run(self, keep_event: threading.Event(), msec: int, callback: Callable[[], Any]) -> None:
+            while True:
+                keep_event.wait()
+                if not self._Qmsec.empty():
+                    msec = self._Qmsec.get()
+                endTime = round(time.time() * 1000) + msec
+                while round(time.time() * 1000) < endTime and keep_event.is_set():
+                    time.sleep(0.001)
+                if keep_event.is_set():
+                    keep_event.clear()
+                    if not self._Qcallback.empty():
+                        callback = self._Qcallback.get()
+                    callback()
 
-    def start(self, msec, callback):
-        self._function = callback
-        self._msec = msec
+    def start(self, msec: int, callback: Callable[[], Any]) -> None:
         if msec > 0:
-            self._thread = threading.Thread(target=self._obj.run, args=(self._kill, self._msec, self._callback))
-            self._thread.setDaemon(True)
-            self._thread.start()
+            self._msec = msec
+            self._function = callback
+            self._keep.set()
+            if not self._thread:
+                self._thread = threading.Thread(target=self._obj.run, args=(self._keep, self._msec, self._callback))
+                self._thread.setDaemon(True)
+                self._thread.start()
+            else:
+                self._obj._Qmsec.put(self._msec)
+                self._obj._Qcallback.put(self._callback)
 
     def _callback(self):
         self._function()
         if self._timerType == self.SNOOZE:
             self.start(self._msec, self._function)
 
-    def stop(self):
-        self._kill.set()
-        self._thread.join()
+    def stop(self) -> None:
+        self._keep.clear()
+
+    def isAlive(self) -> bool:
+        return self._thread.is_alive() and self._keep.is_set()
+    is_alive = isAlive
 
 
 def get_CPU_temp(archOS):
