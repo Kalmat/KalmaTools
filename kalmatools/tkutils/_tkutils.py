@@ -90,6 +90,7 @@ class Tooltip:
         self.pad = pad
         self.id = None
         self.tw = None
+        self._isVisible = False
 
     def onEnter(self, event=None):
         self.schedule()
@@ -186,9 +187,14 @@ class Tooltip:
         x, y = tip_pos_calculator(widget, label)
 
         self.tw.wm_geometry("+%d+%d" % (x, y))
+        self._isVisible = True
 
     def hide(self):
         tw = self.tw
         if tw:
             tw.destroy()
         self.tw = None
+        self._isVisible = False
+
+    def isVisible(self):
+        return self._isVisible

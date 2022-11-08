@@ -47,7 +47,7 @@ class Timer:
             self._Qmsec = queue.Queue()
             self._Qcallback = queue.Queue()
 
-        def run(self, keep_event: threading.Event(), msec: int, callback: Callable[[], Any]) -> None:
+        def run(self, keep_event: threading.Event(), msec: int, callback: Callable[[], Any], timerType) -> None:
             while True:
                 keep_event.wait()
                 if not self._Qmsec.empty():
@@ -60,6 +60,8 @@ class Timer:
                     if not self._Qcallback.empty():
                         callback = self._Qcallback.get()
                     callback()
+                    if timerType == 1:
+                        break
 
     def start(self, msec: int, callback: Callable[[], Any]) -> None:
         if msec > 0:
@@ -67,7 +69,7 @@ class Timer:
             self._function = callback
             if not self._thread:
                 self._keep.set()
-                self._thread = threading.Thread(target=self._obj.run, args=(self._keep, self._msec, self._callback))
+                self._thread = threading.Thread(target=self._obj.run, args=(self._keep, self._msec, self._callback, self._timerType))
                 self._thread.setDaemon(True)
                 self._thread.start()
             else:
@@ -79,9 +81,13 @@ class Timer:
         self._function()
         if self._timerType == self.SNOOZE:
             self.start(self._msec, self._function)
+        else:
+            self._thread.join()
 
     def stop(self) -> None:
         self._keep.clear()
+        if self._timerType == self.ONEOFF:
+            self._thread.join()
 
     def isAlive(self) -> bool:
         return self._thread.is_alive() and self._keep.is_set()
