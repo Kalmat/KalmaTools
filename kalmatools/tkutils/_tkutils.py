@@ -2,6 +2,14 @@ import tkinter as tk
 from PIL import ImageTk
 
 
+def tkLoadFont(fontpath, fontfamily):
+    try:
+        from tkextrafont import Font
+        return Font(file=fontpath, family=fontfamily)
+    except:
+        return None
+
+
 class FakeRoot(tk.Tk):
     # It creates a "Fake", minimum, transparent, iconified root window on top of which you can create a TopLevel
     # It allows to set system caption and icon, what would not be possible if TopLevel child has no title bar

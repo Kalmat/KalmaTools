@@ -8,6 +8,7 @@ plyer>=2.0.0
 pygame>=2.0.2
 pywinctl
 pillow
+tkextrafonts
 pywin32>=302; sys_platform == 'win32'
 PyUserInput>=0.1.11; sys_platform == 'linux'
 xlib>=0.21; sys_platform == 'linux'
