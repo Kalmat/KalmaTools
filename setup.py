@@ -26,9 +26,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     license='BSD',
-    packages=find_packages(where='kalmatools'),
-    package_dir={'': 'kalmatools'},
-    test_suite='tests',
+    packages=['kalmatools', 'kalmatools.bkgutils', 'kalmatools.pgutils', 'kalmatools.qtutils', 'kalmatools.tkutils', 'kalmatools.utils', 'kalmatools.webutils'],
     install_requires=[
         "beautifulsoup4>=4.10.0",
         "playsound>=1.3.0",

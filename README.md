@@ -14,8 +14,8 @@ Use it
 
 Then you can use them by importing every package independently, according to your needs:
 
-    import bkgutils
-    import pgutils
-    import qtutils
-    import utils
-    import webutils
+    from kalmatools import bkgutils
+    from kalmatools import pgutils
+    from kalmatools import qtutilsv
+    from kalmatools import utils
+    from kalmatools import webutils
