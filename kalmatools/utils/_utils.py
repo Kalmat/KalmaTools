@@ -47,7 +47,7 @@ class Timer:
             self._Qmsec = queue.Queue()
             self._Qcallback = queue.Queue()
 
-        def run(self, keep_event: threading.Event(), msec: int, callback: Callable[[], Any], timerType) -> None:
+        def run(self, keep_event: threading.Event(), msec: int, callback: Callable[[], Any], oneoffType) -> None:
             while True:
                 keep_event.wait()
                 if not self._Qmsec.empty():
@@ -60,16 +60,18 @@ class Timer:
                     if not self._Qcallback.empty():
                         callback = self._Qcallback.get()
                     callback()
-                    if timerType == 1:
+                    if oneoffType:
                         break
 
-    def start(self, msec: int, callback: Callable[[], Any]) -> None:
+    def start(self, msec: int, callback: Callable[[], Any], start_now=False) -> None:
         if msec > 0:
             self._msec = msec
             self._function = callback
+            if self._timerType == self.SNOOZE and start_now:
+                self._function()
             if not self._thread:
                 self._keep.set()
-                self._thread = threading.Thread(target=self._obj.run, args=(self._keep, self._msec, self._callback, self._timerType))
+                self._thread = threading.Thread(target=self._obj.run, args=(self._keep, self._msec, self._callback, self._timerType == self.ONEOFF))
                 self._thread.setDaemon(True)
                 self._thread.start()
             else:
