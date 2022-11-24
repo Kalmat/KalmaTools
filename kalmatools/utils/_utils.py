@@ -84,15 +84,16 @@ class Timer:
         if self._timerType == self.SNOOZE:
             self.start(self._msec, self._function)
         else:
-            self._thread.join()
+            self._thread = None
 
     def stop(self) -> None:
         self._keep.clear()
         if self._timerType == self.ONEOFF:
             self._thread.join()
+            self._thread = None
 
     def isAlive(self) -> bool:
-        return self._thread.is_alive() and self._keep.is_set()
+        return self._thread is not None and self._thread.is_alive() and self._keep.is_set()
     is_alive = isAlive
 
 
