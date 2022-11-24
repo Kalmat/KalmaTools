@@ -63,7 +63,6 @@ class Timer:
                     time.sleep(0.001)
 
                 if keep_event.is_set():
-                    keep_event.clear()
                     if not self._Qcallback.empty():
                         callback = self._Qcallback.get()
                     callback()
@@ -77,10 +76,10 @@ class Timer:
             self._msec = msec
             self._function = callback
 
-            if self._timerType == self.SNOOZE and start_now:
-                self._function()
-
-            if not self._Qthread.empty():
+            if self._timerType == self.SNOOZE:
+                if start_now:
+                    self._function()
+            elif not self._Qthread.empty():
                 self._thread = self._Qthread.get()
 
             if self._thread is None:
