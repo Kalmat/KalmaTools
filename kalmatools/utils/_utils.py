@@ -414,4 +414,4 @@ def checkInstances(name):
     for win in pywinctl.getWindowsWithTitle(name):
         if ".py" not in win.title:
             instances += 1
-    return instances > 1
+    return instances
