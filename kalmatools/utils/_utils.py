@@ -31,84 +31,146 @@ class Timer:
     SNOOZE = 0
     ONEOFF = 1
 
-    _Qthread = queue.Queue()
-
     def __init__(self, timerType=SNOOZE):
 
-        self._obj = self._Counter()
-        self._keep = threading.Event()
         self._timerType = timerType
-        self._msec = 0
-        self._thread = None
-        self._function = None
+        self._keep = threading.Event()
+        self._timerSnooze = None
+        self._timerOneoff = None
 
-    class _Counter:
+    class _SnoozeTimer(threading.Timer):
+        # This uses threading.Timer class, but consumes more CPU?!?!?!
 
-        def __init__(self):
-            super().__init__()
-            self._Qmsec = queue.Queue()
-            self._Qcallback = queue.Queue()
+        def __init__(self, event, msec, callback, *args):
+            threading.Thread.__init__(self)
 
-        def run(self, keep_event: threading.Event(), msec: int, callback: Callable[[], Any], oneoffType) -> None:
+            self.stopped = event
+            self.msec = msec
+            self.callback = callback
+            self.args = args
 
-            while True:
+        def run(self):
+            while not self.stopped.wait(self.msec):
+                self.callback(*self.args)
 
-                keep_event.wait()
+    def start(self, msec: int, callback: Callable[[Any], Any], *args, start_now=False) -> bool:
 
-                if not self._Qmsec.empty():
-                    msec = self._Qmsec.get()
-
-                endTime = round(time.time() * 1000) + msec
-                while round(time.time() * 1000) < endTime and keep_event.is_set():
-                    time.sleep(0.001)
-
-                if keep_event.is_set():
-                    if not self._Qcallback.empty():
-                        callback = self._Qcallback.get()
-                    callback()
-
-                if oneoffType:
-                    break
-
-    def start(self, msec: int, callback: Callable[[], Any], start_now=False) -> None:
-
+        started = False
         if msec > 0:
-            self._msec = msec
-            self._function = callback
-
             if self._timerType == self.SNOOZE:
-                if start_now:
-                    self._function()
-            elif not self._Qthread.empty():
-                self._thread = self._Qthread.get()
-
-            if self._thread is None:
-                self._keep.set()
-                self._thread = threading.Thread(target=self._obj.run, args=(self._keep, self._msec, self._callback, self._timerType == self.ONEOFF))
-                self._thread.setDaemon(True)
-                self._thread.start()
+                if self._timerSnooze is None:
+                    self._timerSnooze = self._SnoozeTimer(self._keep, msec / 1000, callback, *self._args)
+                    self._timerSnooze.start()
+                    if start_now:
+                        callback(*args)
+                    started = True
             else:
-                self._obj._Qmsec.put(self._msec)
-                self._obj._Qcallback.put(self._function)
-                self._keep.set()
+                if self._timerOneoff is None:
+                    self._timerOneoff = threading.Timer(msec / 1000, callback, *args)
+                    self._timerOneoff.start()
+                    started = True
+        return started
 
-    def _callback(self):
+    def stop(self):
         if self._timerType == self.SNOOZE:
-            self.start(self._msec, self._function)
+            self._keep.set()
+            self._timerSnooze.join()
         else:
-            self._thread = None
-            self._Qthread.put(self._thread)
-        self._function()
+            self._timerOneoff.cancel()
+            self._timerOneoff.join()
 
-    def stop(self) -> None:
-        self._keep.clear()
-        if self._timerType == self.ONEOFF and self._thread is not None:
-            self._thread.join()
-            self._thread = None
+    def is_alive(self):
+        if self._timerType == self.SNOOZE:
+            isAlive = self._timerSnooze is not None and self._timerSnooze.is_alive() and not self._keep.is_set()
+        else:
+            isAlive = self._timerOneoff is not None and self._timerOneoff.is_alive()
+        return isAlive
+    isAlive = is_alive
 
-    def isAlive(self) -> bool:
-        return self._thread is not None and self._thread.is_alive() and self._keep.is_set()
-    is_alive = isAlive
+
+# class Timer:
+#
+#     SNOOZE = 0
+#     ONEOFF = 1
+#
+#     _Qthread = queue.Queue()
+#
+#     def __init__(self, timerType=SNOOZE):
+#
+#         self._obj = self._Counter()
+#         self._keep = threading.Event()
+#         self._timerType = timerType
+#         self._msec = 0
+#         self._thread = None
+#         self._function = None
+#
+#     class _Counter:
+#
+#         def __init__(self):
+#             super().__init__()
+#             self._Qmsec = queue.Queue()
+#             self._Qcallback = queue.Queue()
+#
+#         def run(self, keep_event: threading.Event(), msec: int, callback: Callable[[], Any], oneoffType) -> None:
+#
+#             while True:
+#
+#                 keep_event.wait()
+#
+#                 if not self._Qmsec.empty():
+#                     msec = self._Qmsec.get()
+#
+#                 endTime = round(time.time() * 1000) + msec
+#                 while round(time.time() * 1000) < endTime and keep_event.is_set():
+#                     time.sleep(0.001)
+#
+#                 if keep_event.is_set():
+#                     if not self._Qcallback.empty():
+#                         callback = self._Qcallback.get()
+#                     callback()
+#
+#                 if oneoffType:
+#                     break
+#
+#     def start(self, msec: int, callback: Callable[[], Any], start_now=False) -> None:
+#
+#         if msec > 0:
+#             self._msec = msec
+#             self._function = callback
+#
+#             if self._timerType == self.SNOOZE:
+#                 if start_now:
+#                     self._function()
+#             elif not self._Qthread.empty():
+#                 self._thread = self._Qthread.get()
+#
+#             if self._thread is None:
+#                 self._keep.set()
+#                 self._thread = threading.Thread(target=self._obj.run, args=(self._keep, self._msec, self._callback, self._timerType == self.ONEOFF))
+#                 self._thread.setDaemon(True)
+#                 self._thread.start()
+#             else:
+#                 self._obj._Qmsec.put(self._msec)
+#                 self._obj._Qcallback.put(self._function)
+#                 self._keep.set()
+#
+#     def _callback(self):
+#         if self._timerType == self.SNOOZE:
+#             self.start(self._msec, self._function)
+#         else:
+#             self._thread = None
+#             self._Qthread.put(self._thread)
+#         self._function()
+#
+#     def stop(self) -> None:
+#         self._keep.clear()
+#         if self._timerType == self.ONEOFF and self._thread is not None:
+#             self._thread.join()
+#             self._thread = None
+#
+#     def isAlive(self) -> bool:
+#         return self._thread is not None and self._thread.is_alive() and self._keep.is_set()
+#     is_alive = isAlive
 
 
 def get_CPU_temp(archOS):

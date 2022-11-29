@@ -1,10 +1,10 @@
 import tkinter as tk
 from PIL import ImageTk
+from tkextrafont import Font
 
 
 def tkLoadFont(fontpath, fontfamily):
     try:
-        from tkextrafont import Font
         return Font(file=fontpath, family=fontfamily)
     except:
         return None
