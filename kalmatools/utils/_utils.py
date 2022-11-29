@@ -59,7 +59,7 @@ class Timer:
         if msec > 0:
             if self._timerType == self.SNOOZE:
                 if self._timerSnooze is None:
-                    self._timerSnooze = self._SnoozeTimer(self._keep, msec / 1000, callback, *self._args)
+                    self._timerSnooze = self._SnoozeTimer(self._keep, msec / 1000, callback, *args)
                     self._timerSnooze.start()
                     if start_now:
                         callback(*args)
