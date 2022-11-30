@@ -53,11 +53,12 @@ class FakeRoot(tk.Tk):
         self.event_generate("<<UNMAP>>")
 
 
-def round_rectangle(parent, canvas, x1, y1, x2, y2, radius=25, color="black", **kwargs):
+def round_rectangle(parent, canvas, x1, y1, x2, y2, radius=25, bgcolor="#FF1493", color="black", **kwargs):
     # https://stackoverflow.com/questions/68874874/how-can-i-make-tkinters-windows-corner-rounded
 
-    parent.config(background="grey95")
-    parent.attributes("-transparentcolor", "grey95")
+    parent.overrideredirect(True)
+    parent.config(background=bgcolor)
+    parent.attributes("-transparentcolor", bgcolor)
 
     points = [x1 + radius, y1,
               x1 + radius, y1,
