@@ -53,6 +53,36 @@ class FakeRoot(tk.Tk):
         self.event_generate("<<UNMAP>>")
 
 
+def round_rectangle(parent, canvas, x1, y1, x2, y2, radius=25, color="black", **kwargs):
+    # https://stackoverflow.com/questions/68874874/how-can-i-make-tkinters-windows-corner-rounded
+
+    parent.config(background="grey95")
+    parent.attributes("-transparentcolor", "grey95")
+
+    points = [x1 + radius, y1,
+              x1 + radius, y1,
+              x2 - radius, y1,
+              x2 - radius, y1,
+              x2, y1,
+              x2, y1 + radius,
+              x2, y1 + radius,
+              x2, y2 - radius,
+              x2, y2 - radius,
+              x2, y2,
+              x2 - radius, y2,
+              x2 - radius, y2,
+              x1 + radius, y2,
+              x1 + radius, y2,
+              x1, y2,
+              x1, y2 - radius,
+              x1, y2 - radius,
+              x1, y1 + radius,
+              x1, y1 + radius,
+              x1, y1]
+
+    return canvas.create_polygon(points, **kwargs, smooth=True, fill=color)
+
+
 class Tooltip:
     '''
     It creates a tooltip for a given widget as the mouse goes on it. see:

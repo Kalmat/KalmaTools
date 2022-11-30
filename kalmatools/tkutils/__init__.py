@@ -7,5 +7,6 @@ __version__ = "0.0.1"
 from ._tkutils import (
     FakeRoot,
     Tooltip,
-    tkLoadFont
+    tkLoadFont,
+    round_rectangle
 )
