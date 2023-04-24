@@ -357,6 +357,8 @@ def getQColorFromRGB(color):
 
 class Marquee(QtWidgets.QLabel):
     # https://stackoverflow.com/questions/36297429/smooth-scrolling-text-in-qlabel
+    
+    _autoPause = False
 
     def __init__(self, parent=None, font=None, color="white", bkgColor="black", fps=60, direction=QtCore.Qt.RightToLeft, autoPause=False):
         super().__init__(parent)

@@ -7,12 +7,11 @@ import subprocess
 
 import Xlib
 import bkgutils
-import ewmh
+import pywinctl as pwc
 
 DISP = Xlib.display.Display()
 SCREEN = DISP.screen()
 ROOT = SCREEN.root
-EWMH = ewmh.EWMH(_display=DISP, root=ROOT)
 
 
 def _X11SendBehind(hWnd=None, name="", parent=None):
@@ -205,9 +204,10 @@ def getScreenSize():
 
 
 def getWorkArea():
-    work_area = EWMH.getWorkArea()
+    work_area = pwc.getWorkArea()
     return work_area[0], work_area[1], work_area[2], work_area[3]
 
 
 def getAttributes(hWnd):
-    return EWMH.getWmWindowType(hWnd, str=True)
+    win = pwc.Window(hWnd)
+    return win._win.getWmWindowType(hWnd, str=True)
